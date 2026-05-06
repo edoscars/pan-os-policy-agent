@@ -1,9 +1,12 @@
 [project]
-name="pan-os-policy_agent"
+name="pan-os-policy-agent"
 version="0.0.1"
-requires-python=">=3.11"
+requires-python = ">=3.11,<3.12"
 description="AI agent that validates hypotetical security policy against the current policy set on the NGFW"
 
+dependencies = [
+    "pan-os-mcp",
+]
 [tool.uv.workspace]
 members=["packages/*"]
 
@@ -12,6 +15,9 @@ line-length=100
 
 [tool.uv]
 package=false
+
+[tool.uv.sources]
+pan-os-mcp = { workspace = true }
 
 [dependency-groups]
 dev = [

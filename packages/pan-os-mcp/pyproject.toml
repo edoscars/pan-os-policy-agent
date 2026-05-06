@@ -1,11 +1,12 @@
 [project]
 name="pan-os-mcp"
 version="0.0.1"
-requires-python=">=3.11"
+requires-python = ">=3.11,<3.12"
 dependencies=[
     "pan-os-python",
     "mcp[cli]",
     "pydantic",
+    "pydantic-settings",
     "python-dotenv"
 ]
 
@@ -14,7 +15,6 @@ pan-os-mcp = "pan_os_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pan_os_mcp"]
-
 
 [build-system]
 requires = ["hatchling"]
