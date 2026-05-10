@@ -3,11 +3,11 @@ name="pan-os-rag"
 version="0.0.1"
 requires-python = ">=3.11,<3.12"
 dependencies=[
-    "pan-os-python",
-    "mcp[cli]",
+    "httpx",
+    "beautifulsoup4",
     "pydantic",
     "pydantic-settings",
-    "python-dotenv"
+    "markdownify"
 ]
 
 [project.scripts]
