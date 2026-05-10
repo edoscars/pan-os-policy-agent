@@ -40,6 +40,10 @@ async def main() -> None:
             result = await session.call_tool("get_system_info", {})
             print(result)
 
+            print("\nCalling list_zones()")
+            result = await session.call_tool("list_zones", {})
+            print(result)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
