@@ -44,6 +44,10 @@ async def main() -> None:
             result = await session.call_tool("list_zones", {})
             print(result)
 
+            print("\nCalling list_address_objects()")
+            result = await session.call_tool("list_address_objects", {})
+            print(result)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
