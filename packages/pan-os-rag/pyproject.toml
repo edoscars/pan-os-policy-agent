@@ -1,0 +1,21 @@
+[project]
+name="pan-os-rag"
+version="0.0.1"
+requires-python = ">=3.11,<3.12"
+dependencies=[
+    "pan-os-python",
+    "mcp[cli]",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv"
+]
+
+[project.scripts]
+pan-os-rag-scrape = "pan_os_rag.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pan_os_rag"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

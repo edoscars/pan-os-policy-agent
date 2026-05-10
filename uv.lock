@@ -6,6 +6,7 @@ requires-python = "==3.11.*"
 members = [
     "pan-os-mcp",
     "pan-os-policy-agent",
+    "pan-os-rag",
 ]
 
 [[package]]
@@ -378,6 +379,7 @@ version = "0.0.1"
 source = { virtual = "." }
 dependencies = [
     { name = "pan-os-mcp" },
+    { name = "pan-os-rag" },
 ]
 
 [package.dev-dependencies]
@@ -389,7 +391,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pan-os-mcp", editable = "packages/pan-os-mcp" }]
+requires-dist = [
+    { name = "pan-os-mcp", editable = "packages/pan-os-mcp" },
+    { name = "pan-os-rag", editable = "packages/pan-os-rag" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -409,6 +414,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/70/8e/48b82fadc72c848b846901f21ed49bd788dfe5a53b799549b4afb940fc51/pan_os_python-1.12.5.tar.gz", hash = "sha256:65e6b458c7459192c4662d9aa94f70a17140dda0100446217fe0fbb3965a3aba", size = 152484 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/ae/c2a5688f04a458451ab3ff198f2310aa4955f12fd8fe1f2bf897476eb7e5/pan_os_python-1.12.5-py2.py3-none-any.whl", hash = "sha256:6967ca60f174cafaa15648388793204fccd646baf5bc065cf1e7acacea418bd7", size = 160764 },
+]
+
+[[package]]
+name = "pan-os-rag"
+version = "0.0.1"
+source = { editable = "packages/pan-os-rag" }
+dependencies = [
+    { name = "mcp", extra = ["cli"] },
+    { name = "pan-os-python" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mcp", extras = ["cli"] },
+    { name = "pan-os-python" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
 ]
 
 [[package]]
