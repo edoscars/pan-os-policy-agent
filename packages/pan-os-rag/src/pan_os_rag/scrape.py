@@ -60,15 +60,6 @@ def discover_subpages(html_path: Path) -> list[str]:
     TechDocs pages list child pages as <ul data-outputclass="nav">.
     Returns absolute URLs with fragments stripped.
     """
-    # TODO:
-    # 1. Read html_path.
-    # 2. Parse with BeautifulSoup.
-    # 3. Find all anchors matching the selector ul[data-outputclass="nav"] a.xref.
-    # 4. For each anchor:
-    #    - Get its href attribute.
-    #    - Resolve to absolute URL via urljoin with the TechDocs base.
-    #    - Strip the fragment via urldefrag.
-    # 5. Return the list.
     html_content = html_path.read_text(encoding="utf-8")
     soup = BeautifulSoup(html_content, "html.parser")
     subpages = soup.select('ul[data-outputclass="nav"] a.xref')
@@ -95,16 +86,10 @@ def crawl(seed_urls: list[str], corpus_dir: Path) -> list[Path]:
         seen.add(url)
 
         print(f"Fetching {url}...")
-        
-        # TODO:
-        # 1. fetch(url, corpus_dir) → html_path
-        # 2. extract_markdown(html_path) → md_path
-        # 3. discover_subpages(html_path) → list of new URLs
-        # 4. For each new URL not in seen, queue.append(it)
-        # 5. cached_paths.append(html_path)
+
         url_fetched = fetch(url, corpus_dir)
 
-        url_md = extract_markdown(url_fetched)
+        extract_markdown(url_fetched)
 
         subpages = discover_subpages(url_fetched)
 
