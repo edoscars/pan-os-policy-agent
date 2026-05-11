@@ -1,12 +1,12 @@
 """Fetch and extract PAN-OS TechDocs pages."""
 
 from pathlib import Path
-from urllib.parse import urlparse
-from urllib.parse import urldefrag, urljoin
+from urllib.parse import urldefrag, urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 from markdownify import markdownify
 from collections import deque
+import time
 
 def url_to_cache_path(url: str, cache_dir: Path) -> Path:
     """Turn a TechDocs URL into a cache file path under cache_dir.
@@ -67,7 +67,13 @@ def discover_subpages(html_path: Path) -> list[str]:
 
     for subpage in subpages:
         href = subpage.get('href')
+        if not href:
+            continue 
         subpage_url = urljoin("https://docs.paloaltonetworks.com/", urldefrag(href)[0])
+        parsed = urlparse(subpage_url)
+        if not parsed.path.strip("/"):
+            continue
+
         subpages_urls.append(subpage_url)
 
     return subpages_urls
@@ -78,6 +84,7 @@ def crawl(seed_urls: list[str], corpus_dir: Path) -> list[Path]:
     seen: set[str] = set()
     queue: deque[str] = deque(seed_urls)
     cached_paths: list[Path] = []
+    skipped : list[tuple[str,int]] = []
     
     while queue:
         url = queue.popleft()
@@ -87,23 +94,45 @@ def crawl(seed_urls: list[str], corpus_dir: Path) -> list[Path]:
 
         print(f"Fetching {url}...")
 
-        url_fetched = fetch(url, corpus_dir)
+        try:
+            
+            url_fetched = fetch(url, corpus_dir)
+            
+            print(f"  → {url_fetched}") 
+            extract_markdown(url_fetched)
 
-        extract_markdown(url_fetched)
+            subpages = discover_subpages(url_fetched)
 
-        subpages = discover_subpages(url_fetched)
-
-        for subpage in subpages:
-            queue.append(subpage)
+            for subpage in subpages:
+                queue.append(subpage)
         
-        cached_paths.append(url_fetched)
+            cached_paths.append(url_fetched)
+        
+        except httpx.HTTPStatusError as e:
+            skipped.append((url, e.response.status_code))
+            print(f" SKIP: {e.response.status_code} for {url}")
+            continue
+
+        time.sleep(0.5)
+
+    print(f"\nCrawled {len(cached_paths)} pages, skipped {len(skipped)}")
+    if skipped:
+        for url, status in skipped:
+            print(f"  {status} {url}")
     
     return cached_paths
 
 if __name__ == "__main__":
     cache = Path("corpus")
     seeds = [
-        "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/policy/security-policy",
+        # PAN-OS 11.1 Admin Guide — Policy chapter (Security Policy, sub-pages)
+        "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/policy",
+        
+        # PAN-OS 11.1 Admin Guide — Policy Objects (Address, Service, Application, etc.)
+        "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/policy/policy-objects",
+        
+        # User-ID Guide (on the newer /ngfw/administration/ path)
+        "https://docs.paloaltonetworks.com/ngfw/administration/user-id",
     ]
     
     paths = crawl(seeds, cache)
