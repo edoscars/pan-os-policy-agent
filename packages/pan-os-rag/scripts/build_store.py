@@ -5,7 +5,7 @@ Usage:
 """
 
 from pathlib import Path
-from pan_os_rag.store import build_table, build_index
+from pan_os_rag.store import build_table, build_index, build_fts_index
 
 JSONL_PATH = Path("corpus/embeddings.jsonl")
 
@@ -13,6 +13,7 @@ JSONL_PATH = Path("corpus/embeddings.jsonl")
 def main() -> None:
     build_table(JSONL_PATH)
     build_index()
+    build_fts_index()
     print("Done.")
 
 

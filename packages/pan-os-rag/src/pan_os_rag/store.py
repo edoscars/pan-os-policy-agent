@@ -73,3 +73,19 @@ def build_index() -> None:
     """
     table = get_table()
     table.create_index(metric="cosine", vector_column_name="vector")
+
+def build_fts_index() -> None:
+    """Create a BM25 full-text-search index on the text column.
+
+    Used by retrieve.py for hybrid retrieval (BM25 + vector).
+    Indexing happens asynchronously after this call returns —
+    queries against the FTS index work immediately but may be
+    slower until indexing completes.
+    """
+    table = get_table()
+    table.create_fts_index(
+        "text",
+        use_tantivy=False,
+        replace=True,
+        language="English",
+    )
