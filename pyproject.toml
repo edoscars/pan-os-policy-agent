@@ -7,6 +7,7 @@ description="AI agent that validates hypotetical security policy against the cur
 dependencies = [
     "pan-os-mcp",
     "pan-os-rag",
+    "pan-os-agent",
 ]
 [tool.uv.workspace]
 members=["packages/*"]
@@ -14,12 +15,16 @@ members=["packages/*"]
 [tool.ruff]
 line-length=100
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [tool.uv]
 package=false
 
 [tool.uv.sources]
 pan-os-mcp = { workspace = true }
 pan-os-rag = { workspace = true }
+pan-os-agent = { workspace = true }
 
 [dependency-groups]
 dev = [

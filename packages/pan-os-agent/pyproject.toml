@@ -1,0 +1,19 @@
+[project]
+name = "pan-os-agent"
+version = "0.0.1"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "anthropic",
+    "pydantic",
+    "pydantic-settings",
+    "mcp[cli]",          # the agent is an MCP *client* — needs the same SDK the server uses
+    "pan-os-mcp",        # library import + subprocess spawn target
+    "pan-os-rag",        # retriever import
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pan_os_agent"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
