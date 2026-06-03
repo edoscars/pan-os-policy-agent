@@ -17,7 +17,9 @@ from pan_os_rag.chunk import Chunk
 # Both pan-os-rag retrievers share this signature: (query, k) -> list[Chunk].
 Retriever = Callable[..., list[Chunk]]
 
-DEFAULT_MODEL = "claude-sonnet-4-6"
+# Opus 4.8: most capable model; structured outputs + adaptive thinking supported.
+# Override per-run via AgentContext.model (e.g. "claude-sonnet-4-6" for cheaper/faster).
+DEFAULT_MODEL = "claude-opus-4-8"
 
 
 @dataclass
