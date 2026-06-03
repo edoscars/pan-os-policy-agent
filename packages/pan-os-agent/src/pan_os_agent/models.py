@@ -25,3 +25,15 @@ class StructuredIntent(BaseModel):
     applications: list[str] = []
     services: list[str] = []
     action: str = "allow"
+
+
+class IntentAssessment(BaseModel):
+    """Stage-1 output: the parsed intent plus a coherence judgment.
+
+    `coherent` is False only when the text isn't an access-control request at
+    all; `issue` then explains why (drives the halt reason).
+    """
+
+    coherent: bool
+    issue: str = ""
+    intent: StructuredIntent
