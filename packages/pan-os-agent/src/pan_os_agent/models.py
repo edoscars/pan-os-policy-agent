@@ -37,3 +37,19 @@ class IntentAssessment(BaseModel):
     coherent: bool
     issue: str = ""
     intent: StructuredIntent
+
+
+class PrerequisiteFinding(BaseModel):
+    """One checked requirement: a named object's existence, or a config prereq."""
+
+    requirement: str
+    satisfied: bool
+    detail: str = ""
+
+
+class PrerequisiteReport(BaseModel):
+    """Stage-2 output: which prerequisites for the intent are/aren't met."""
+
+    findings: list[PrerequisiteFinding]
+    all_satisfied: bool
+    notes: str = ""

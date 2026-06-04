@@ -8,7 +8,7 @@ model_dump_json() yields a complete, replayable trace of a run.
 
 from pydantic import BaseModel, ConfigDict
 
-from pan_os_agent.models import StructuredIntent
+from pan_os_agent.models import PrerequisiteReport, StructuredIntent
 
 
 class TraceEntry(BaseModel):
@@ -29,6 +29,7 @@ class PolicyDraftState(BaseModel):
 
     intent_text: str
     structured_intent: StructuredIntent | None = None
+    prerequisites: PrerequisiteReport | None = None
 
     halted: bool = False
     halt_reason: str = ""

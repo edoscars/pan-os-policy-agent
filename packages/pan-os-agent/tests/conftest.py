@@ -67,3 +67,31 @@ def fake_anthropic():
     # from conftest (which isn't an importable package path).
     _build.ParsedMessage = FakeParsedMessage
     return _build
+
+
+class FakeMcpClient:
+    """Stand-in for McpClient: returns canned tool results keyed by tool name.
+
+    Mirrors the fixture_map idea from pan-os-mcp's FakeFirewallClient — the test
+    declares which result each tool call returns. Records calls for assertions.
+    """
+
+    def __init__(self, responses: dict[str, object]) -> None:
+        self._responses = responses
+        self.calls: list[tuple[str, dict | None]] = []
+
+    async def call_tool(self, name: str, arguments: dict | None = None) -> object:
+        self.calls.append((name, arguments))
+        if name not in self._responses:
+            raise KeyError(f"no fake MCP response configured for tool {name!r}")
+        return self._responses[name]
+
+
+@pytest.fixture
+def fake_mcp():
+    """Builder: pass {tool_name: result} (results shaped like the real tools)."""
+
+    def _build(responses: dict[str, object]) -> FakeMcpClient:
+        return FakeMcpClient(responses)
+
+    return _build
