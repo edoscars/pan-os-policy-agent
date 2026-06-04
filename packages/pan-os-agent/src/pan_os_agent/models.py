@@ -53,3 +53,11 @@ class PrerequisiteReport(BaseModel):
     findings: list[PrerequisiteFinding]
     all_satisfied: bool
     notes: str = ""
+
+
+class RedundancyReport(BaseModel):
+    """Stage-3 output: whether an existing rule already satisfies the intent."""
+
+    redundant: bool
+    matching_rule: str = ""
+    reasoning: str = ""
