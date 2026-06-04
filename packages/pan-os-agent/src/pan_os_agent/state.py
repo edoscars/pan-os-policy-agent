@@ -8,7 +8,12 @@ model_dump_json() yields a complete, replayable trace of a run.
 
 from pydantic import BaseModel, ConfigDict
 
-from pan_os_agent.models import PrerequisiteReport, RedundancyReport, StructuredIntent
+from pan_os_agent.models import (
+    PrerequisiteReport,
+    Proposal,
+    RedundancyReport,
+    StructuredIntent,
+)
 
 
 class TraceEntry(BaseModel):
@@ -31,6 +36,7 @@ class PolicyDraftState(BaseModel):
     structured_intent: StructuredIntent | None = None
     prerequisites: PrerequisiteReport | None = None
     redundancy: RedundancyReport | None = None
+    proposal: Proposal | None = None
 
     halted: bool = False
     halt_reason: str = ""

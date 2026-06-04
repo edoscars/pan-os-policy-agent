@@ -61,3 +61,37 @@ class RedundancyReport(BaseModel):
     redundant: bool
     matching_rule: str = ""
     reasoning: str = ""
+
+
+class ProposedRule(BaseModel):
+    """A complete Security rule proposed for the intent, defaults filled in.
+
+    Defaults mirror PAN-OS rule defaults (any / application-default); the
+    proposal stage overrides them with whatever the intent specifies.
+    """
+
+    name: str
+    from_zones: list[str] = ["any"]
+    to_zones: list[str] = ["any"]
+    sources: list[str] = ["any"]
+    destinations: list[str] = ["any"]
+    source_users: list[str] = ["any"]
+    applications: list[str] = ["any"]
+    services: list[str] = ["application-default"]
+    action: str = "allow"
+    description: str = ""
+
+
+class ShadowAssessment(BaseModel):
+    """Whether an earlier rule would shadow the proposed rule (make it unreachable)."""
+
+    shadowed: bool
+    shadowing_rule: str = ""
+    reasoning: str = ""
+
+
+class Proposal(BaseModel):
+    """Stage-4 output: the proposed rule plus its shadowing assessment."""
+
+    rule: ProposedRule
+    shadow: ShadowAssessment
