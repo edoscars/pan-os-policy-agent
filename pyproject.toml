@@ -42,4 +42,10 @@ dev = [
 demo = [
     "streamlit",
 ]
+# Secured product only: Prisma AIRS scanning. Portkey needs no package — it's a
+# base_url + header swap on the Anthropic client. Kept optional so the unsecured
+# product and its tests don't require it. Install with `uv run --group secured`.
+secured = [
+    "pan-aisecurity",
+]
 

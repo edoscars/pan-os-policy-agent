@@ -8,11 +8,16 @@ dataclass, not a Pydantic model, because it holds live, non-serializable objects
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from anthropic import AsyncAnthropic
 
 from pan_os_agent.mcp_client import McpClient
 from pan_os_rag.chunk import Chunk
+
+if TYPE_CHECKING:
+    # Typed-only import: keeps the aisecurity SDK out of the core/unsecured path.
+    from pan_os_agent.security.airs import AirsScanner
 
 # Both pan-os-rag retrievers share this signature: (query, k) -> list[Chunk].
 Retriever = Callable[..., list[Chunk]]
@@ -28,3 +33,5 @@ class AgentContext:
     retriever: Retriever
     anthropic: AsyncAnthropic
     model: str = DEFAULT_MODEL
+    # Set only by the secured product; the AIRS gate stage reads it.
+    airs: "AirsScanner | None" = None

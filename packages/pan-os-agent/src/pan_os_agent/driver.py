@@ -22,11 +22,17 @@ def load_intents(path: Path) -> list[str]:
     return intents
 
 
-async def run_intents(intents: list[str], ctx: AgentContext) -> list[PolicyDraftState]:
-    """Run the gauntlet for each intent, reusing one context (one MCP server)."""
+async def run_intents(
+    intents: list[str], ctx: AgentContext, stages=None
+) -> list[PolicyDraftState]:
+    """Run the gauntlet for each intent, reusing one context (one MCP server).
+
+    `stages` is forwarded to run_agent so the secured product can pass
+    SECURED_STAGES (the core four plus the AIRS gate).
+    """
     results = []
     for text in intents:
-        results.append(await run_agent(PolicyDraftState(intent_text=text), ctx))
+        results.append(await run_agent(PolicyDraftState(intent_text=text), ctx, stages))
     return results
 
 
