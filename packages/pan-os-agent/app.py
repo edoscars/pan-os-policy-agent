@@ -18,6 +18,7 @@ from pan_os_agent.context import AgentContext
 from pan_os_agent.mcp_client import McpClient
 from pan_os_agent.orchestrator import run_agent
 from pan_os_agent.state import PolicyDraftState
+from pan_os_agent.ui import render_result
 from pan_os_rag.retrieve import retrieve
 
 EXAMPLES = [
@@ -40,39 +41,6 @@ def run_gauntlet(intent_text: str) -> PolicyDraftState:
     return asyncio.run(_run())
 
 
-def render(state: PolicyDraftState) -> None:
-    st.write("**Stages run:** " + " → ".join(t.stage for t in state.trace))
-
-    if state.halted:
-        st.warning(f"**Halted:** {state.halt_reason}")
-    else:
-        rule = state.proposal.rule
-        st.success(f"**Proposed rule:** `{rule.name}`  — pending approval, never committed")
-        rows = [
-            ("From → To", f"{', '.join(rule.from_zones)} → {', '.join(rule.to_zones)}"),
-            ("Source → Dest", f"{', '.join(rule.sources)} → {', '.join(rule.destinations)}"),
-            ("User", ", ".join(rule.source_users)),
-            ("Application", ", ".join(rule.applications)),
-            ("Service", ", ".join(rule.services)),
-            ("Action", rule.action),
-        ]
-        st.table([{"Field": k, "Value": v} for k, v in rows])
-
-        if state.prerequisites and not state.prerequisites.all_satisfied:
-            unmet = [f.requirement for f in state.prerequisites.findings if not f.satisfied]
-            st.warning("**Prerequisites not met:**\n" + "\n".join(f"- {u}" for u in unmet))
-
-        if state.proposal.shadow.shadowed:
-            st.error(
-                f"**Shadowing warning:** this rule would be shadowed by "
-                f"`{state.proposal.shadow.shadowing_rule}` and never take effect.\n\n"
-                f"{state.proposal.shadow.reasoning}"
-            )
-
-    with st.expander("Full JSON trace"):
-        st.json(state.model_dump())
-
-
 st.set_page_config(page_title="PAN-OS Policy Agent", page_icon="🛡️")
 st.title("🛡️ Guided Security Policy Authoring")
 st.caption(
@@ -86,4 +54,4 @@ intent = st.text_input("Policy intent", value=example, placeholder="e.g. Let the
 if st.button("Run gauntlet", type="primary") and intent.strip():
     with st.spinner("Inspecting the firewall, retrieving docs, reasoning…"):
         state = run_gauntlet(intent.strip())
-    render(state)
+    render_result(state)
