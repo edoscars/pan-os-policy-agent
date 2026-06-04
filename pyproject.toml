@@ -37,4 +37,9 @@ dev = [
     "pytest-asyncio",
     "mypy",
 ]
+# Demo-only: the Streamlit UI. Kept out of pan-os-agent's deps so the library
+# doesn't depend on a GUI framework. Install on demand with `uv run --group demo`.
+demo = [
+    "streamlit",
+]
 

@@ -67,6 +67,17 @@ uv run --env-file .env python packages/pan-os-agent/scripts/run_agent.py \
 uv run --env-file .env python packages/pan-os-agent/scripts/run_grounding_eval.py
 ```
 
+### Demo UI
+
+A minimal Streamlit front-end (type an intent, see the validated outcome):
+
+```bash
+uv run --group demo --env-file .env streamlit run packages/pan-os-agent/app.py
+```
+
+Streamlit lives in the optional `demo` dependency group, so it isn't pulled in
+for normal use or tests.
+
 `.env` holds `PANOS_HOST`, `PANOS_API_KEY`, `VOYAGE_API_KEY`, and
 `ANTHROPIC_API_KEY` (see `.env.example`).
 
