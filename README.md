@@ -69,7 +69,7 @@ cp .env.example .env    # then edit .env with your values
 `.env` (injected at runtime via `uv run --env-file .env`):
 
 ```ini
-PANOS_HOST=192.168.1.4
+PANOS_HOST=<firewall IP address>
 PANOS_API_KEY=<firewall API key>
 PANOS_VSYS=vsys1
 VOYAGE_API_KEY=<voyage key>
