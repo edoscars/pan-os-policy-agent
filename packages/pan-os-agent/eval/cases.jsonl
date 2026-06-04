@@ -1,0 +1,8 @@
+{"intent": "What is the capital of France?", "expect_outcome": "halt@intent"}
+{"intent": "Recommend a good pizza topping for movie night", "expect_outcome": "halt@intent"}
+{"intent": "Permit web-browsing from the trust zone to the untrust zone", "expect_outcome": "halt@redundancy"}
+{"intent": "Allow hosts in the trust zone to reach the untrust zone over SSL", "expect_outcome": "halt@redundancy"}
+{"intent": "Block the TikTok app from the trust zone to the untrust zone", "expect_outcome": "proposal", "expect_action": "deny", "expect_applications": ["tiktok"], "expect_shadowed": true}
+{"intent": "Deny all SMB traffic leaving the trust zone for the untrust zone", "expect_outcome": "proposal", "expect_action": "deny", "expect_shadowed": true}
+{"intent": "Allow the DMZ zone to reach the database-server object over MySQL", "expect_outcome": "proposal", "expect_action": "allow", "expect_applications": ["mysql"], "expect_missing": ["DMZ", "database-server"]}
+{"intent": "Allow guests on the guest-wifi zone to reach the internet for general web browsing", "expect_outcome": "proposal", "expect_action": "allow", "expect_missing": ["guest-wifi"]}

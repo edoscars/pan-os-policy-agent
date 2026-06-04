@@ -17,6 +17,10 @@ line-length=100
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Collect only real test modules; scripts like smoke_test.py would otherwise
+# match the default *_test.py glob and collide across packages.
+python_files = ["test_*.py"]
+testpaths = ["packages"]
 
 [tool.uv]
 package=false
