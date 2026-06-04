@@ -50,36 +50,76 @@ A `uv` workspace with three library packages (`pan-os-*` PyPI names,
   over stdio), a hand-rolled async state machine, the four stages, and a
   single-shot CLI driver.
 
-## Running it
+## Requirements
 
-All scripts run from the repo root with credentials injected at runtime:
+- **Python 3.11** (pinned `>=3.11,<3.12` because `pan-os-python` imports `distutils`)
+- **[uv](https://docs.astral.sh/uv/)** for the workspace and runs
+- A reachable **PAN-OS firewall** with a read-only API admin role
+- API keys: **Voyage AI** (RAG embeddings/rerank) and **Anthropic** (the agent)
+
+## Setup
+
+```bash
+git clone https://github.com/edoscars/pan-os-policy-agent
+cd pan-os-policy-agent
+uv sync                 # installs all three workspace packages
+cp .env.example .env    # then edit .env with your values
+```
+
+`.env` (injected at runtime via `uv run --env-file .env`):
+
+```ini
+PANOS_HOST=192.168.1.4
+PANOS_API_KEY=<firewall API key>
+PANOS_VSYS=vsys1
+VOYAGE_API_KEY=<voyage key>
+ANTHROPIC_API_KEY=<anthropic key>
+```
+
+**Build the RAG store (first run only).** The prerequisite stage retrieves from
+a local LanceDB store under `corpus/` (gitignored, regenerable). Build it once:
+
+```bash
+uv run --env-file .env python packages/pan-os-rag/scripts/build_embeddings.py
+uv run --env-file .env python packages/pan-os-rag/scripts/build_store.py
+```
+
+## Usage
+
+### Easiest: the demo UI
+
+```bash
+uv run --group demo --env-file .env streamlit run packages/pan-os-agent/app.py
+```
+
+Opens at `http://localhost:8501`. Pick an example or type an intent in plain
+English (*"Block BitTorrent for engineering from trust to untrust"*), click
+**Run gauntlet**, and read the outcome — a proposed rule with prerequisite and
+shadowing warnings, or why it halted. (`streamlit` is in the optional `demo`
+dependency group, so it isn't pulled in for normal use or tests.)
+
+### CLI
 
 ```bash
 # one intent
 uv run --env-file .env python packages/pan-os-agent/scripts/run_agent.py \
     "finance group needs access to Salesforce"
 
-# a fixtures file, dumping JSON traces to ./traces
+# a fixtures file, dumping full JSON traces to ./traces
 uv run --env-file .env python packages/pan-os-agent/scripts/run_agent.py \
     --fixtures packages/pan-os-agent/fixtures/intents.txt --out traces
-
-# end-task grounding eval (agent outcomes vs labeled expectations)
-uv run --env-file .env python packages/pan-os-agent/scripts/run_grounding_eval.py
 ```
 
-### Demo UI
+### What you get back
 
-A minimal Streamlit front-end (type an intent, see the validated outcome):
+Every run ends in one of three outcomes:
 
-```bash
-uv run --group demo --env-file .env streamlit run packages/pan-os-agent/app.py
-```
+- **Halted at intent** — the text wasn't an access-control request.
+- **Halted at redundancy** — an existing rule already satisfies it (named in the output).
+- **Proposed rule** — the full rule, plus any unmet prerequisites and shadowing warnings.
 
-Streamlit lives in the optional `demo` dependency group, so it isn't pulled in
-for normal use or tests.
-
-`.env` holds `PANOS_HOST`, `PANOS_API_KEY`, `VOYAGE_API_KEY`, and
-`ANTHROPIC_API_KEY` (see `.env.example`).
+The CLI prints a human-readable summary; `--out DIR` (or the UI's *Full JSON
+trace* panel) gives the complete per-stage reasoning.
 
 ## Testing
 
