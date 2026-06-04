@@ -91,6 +91,9 @@ async def check_prerequisites(state: PolicyDraftState, ctx: AgentContext) -> Pol
     if report is None:
         return state.halt(stage="prerequisite", reason="model refused the prerequisite check")
 
+    # Record which docs grounded this check (Claude doesn't see chunk_ids).
+    report = report.model_copy(update={"retrieved_doc_ids": [c.chunk_id for c in chunks]})
+
     satisfied = sum(f.satisfied for f in report.findings)
     summary = f"{satisfied}/{len(report.findings)} prerequisites satisfied"
     return state.advance(stage="prerequisite", summary=summary, prerequisites=report)

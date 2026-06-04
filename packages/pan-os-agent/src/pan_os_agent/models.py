@@ -48,11 +48,16 @@ class PrerequisiteFinding(BaseModel):
 
 
 class PrerequisiteReport(BaseModel):
-    """Stage-2 output: which prerequisites for the intent are/aren't met."""
+    """Stage-2 output: which prerequisites for the intent are/aren't met.
+
+    `retrieved_doc_ids` records the RAG chunks that grounded this check, so a
+    trace shows which documentation informed the configuration findings.
+    """
 
     findings: list[PrerequisiteFinding]
     all_satisfied: bool
     notes: str = ""
+    retrieved_doc_ids: list[str] = []
 
 
 class RedundancyReport(BaseModel):

@@ -24,7 +24,7 @@ def _inventory(zones=(), address_objects=(), address_groups=(), services=()):
 
 
 def _chunk(text):
-    return Chunk(text=text, source_url="https://docs/x", page_title="User-ID",
+    return Chunk(text=text, source_url="https://d.com/pan-os/user-id", page_title="User-ID",
                 heading_path=["User-ID", "Enable"], position=0)
 
 
@@ -62,8 +62,10 @@ async def test_gathers_inventory_retrieves_docs_and_attaches_report(fake_mcp, fa
     assert retrieved == [("finance -> salesforce", 5)]
     # Report attached, not halted, summary counts satisfied findings.
     assert result.halted is False
-    assert result.prerequisites is report
     assert result.trace[-1].summary == "1/2 prerequisites satisfied"
+    # Provenance: the retrieved chunk's id is recorded on the report.
+    assert result.prerequisites.findings == report.findings
+    assert result.prerequisites.retrieved_doc_ids == ["pan-os/user-id:0"]
     # The prompt threaded inventory + docs to Claude.
     sent = ctx.anthropic.messages.calls[0]["messages"][0]["content"]
     assert "trust" in sent and "User-ID" in sent
