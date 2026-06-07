@@ -75,9 +75,83 @@ Networks.**)
 | A **security profile** on a rule (TP/AV/URL) | A **guardrail** on the Config (e.g. **Prisma AIRS**) |
 | **Inline** (block) vs **TAP** (alert only) | **deny + sync** (block) vs **async** (log only) |
 | The **Threat log** | **hook_results** — the per-call security verdict |
+| **Panorama** (manage policy centrally) | The **dashboard** — providers, guardrails, configs, logs |
 
-You don't learn a new security product. You learn **where AIRS plugs in**: it's a
-profile on the gateway's policy. Everything else maps to what you already run.
+You don't learn a new security product. You learn **where AIRS plugs in**.
+
+---
+
+## What Portkey actually is (form factor)
+
+Not a SaaS you're locked into — a **lightweight open-source AI gateway** (on
+GitHub) with a managed cloud and enterprise editions. **You choose where it runs,
+and therefore where your AI traffic flows.**
+
+| Deployment | What it is | Closest NGFW analogy |
+|---|---|---|
+| **Managed (SaaS)** | `api.portkey.ai`, hosted by Portkey | cloud-delivered enforcement |
+| **Self-hosted (OSS)** | run the gateway (Docker) in your VPC; prompts/responses stay in your network | an appliance racked in your DC |
+| **Enterprise / hybrid** | self-host the data plane + Portkey control plane; RBAC, PII redaction, SOC2 / ISO / HIPAA / GDPR | management / data-plane split |
+
+For a regulated network, **self-host it** — the model traffic *and* the AIRS
+enforcement run inside your environment.
+
+---
+
+## How it drops into your codebase
+
+It's an **inline proxy**: change the *next hop* (`base_url`) and attach a *policy*
+(`config`). Four ways in — pick what the app already uses:
+
+- **The provider's own SDK** (Anthropic, OpenAI, …) + Portkey `base_url` + headers
+  — **what this project does; zero new libraries.**
+- **Portkey SDK** (`portkey-ai`) — native, adds trace/metadata helpers.
+- **OpenAI-compatible** endpoint · **REST** · **self-hosted** custom base URL.
+
+The whole integration is a handful of **headers** (the policy attach-points):
+
+| Header | Role |
+|---|---|
+| `x-portkey-api-key` | authenticate to the gateway |
+| `x-portkey-config` | the **policy** — guardrails, cache, routing (`pc-***`) |
+| `x-portkey-provider` | which model — `@anthropic` (Model Catalog slug) |
+| `x-portkey-trace-id` / `x-portkey-metadata` | tag the call (user, dept) for logs |
+
+---
+
+## Control plane vs. data plane
+
+You already separate **Panorama** (define policy once) from the **firewall data
+plane** (enforce per packet). Portkey is the same split:
+
+| In the **GUI** — control plane (define once) | In **code** — data plane (per call) |
+|---|---|
+| Providers / Model Catalog (keys, slugs) | Point the client at the gateway |
+| **Guardrails** (Prisma AIRS) | Select the **Config** (`pc-***`) |
+| **Configs** (routing, cache, retry, fallback) | Pass `trace-id` + `metadata` (user/dept) |
+| Budgets & rate limits, RBAC, access control | Cache controls per call |
+| Logs & analytics, prompt library, MCP registry | — |
+
+Define governance centrally; the app just **references** it. **Security owns the
+policy; app teams ship.**
+
+---
+
+## One inline point, many services
+
+Like the subscription blades on an NGFW — but for AI traffic, all at the same
+inline point:
+
+- **Security / governance** — guardrails (**Prisma AIRS** + 50+), PII redaction,
+  RBAC key management, access control, budgets & rate limits.
+- **Reliability** — retries, timeouts, automatic fallback, load-balancing, simple
+  & semantic caching.
+- **Visibility** — every call logged with cost, latency, tokens; filter by
+  user / metadata.
+- **Agent tools** — **MCP Gateway** to govern the agent's *tool* calls (later).
+
+You're not adopting a point tool for AIRS — you're adopting the **control point
+AIRS runs on.**
 
 ---
 
@@ -99,20 +173,19 @@ console you already operate. The gateway just *invokes* it inline.
 
 ## Inline vs. TAP — you already make this call
 
-Two flags on the guardrail decide enforcement mode. You've made this exact
-decision a thousand times:
+Two flags on the guardrail decide enforcement mode — a decision you've made a
+thousand times:
 
 | Firewall mode | Portkey setting | Behavior |
 |---|---|---|
 | **Inline / blocking** | `deny: true`, `async: false` | AIRS runs **before** the model and **drops** a malicious prompt |
 | **TAP / monitor** | `async: true` | AIRS runs out-of-band, **logs only**, model still runs |
 
-For real protection you want **inline** — AIRS verdict gates the call. That's the
-config on the next slide.
+For real protection you want **inline** — the AIRS verdict gates the call.
 
 ---
 
-## The setup is in the GUI — the app barely changes
+## The setup: AIRS config lives in the GUI
 
 **In Portkey (no code):** add AIRS keys (from Strata) → create the *PANW Prisma
 AIRS* guardrail with your **profile** → attach it to a **Config**, inline on input
@@ -125,17 +198,10 @@ and output:
 }
 ```
 
-**In the app (the entire integration):** point the model client at the gateway and
-name the Config — no AIRS SDK, no AIRS keys in code:
-
-```python
-client = AsyncAnthropic(
-    base_url="https://api.portkey.ai",
-    default_headers={"x-portkey-api-key": KEY, "x-portkey-config": "pc-***"},
-)
-```
-
-Configure once; every agent that uses the Config inherits the protection.
+**In the app:** the only change is the one from *"How it drops into your
+codebase"* — point the client at the gateway and name this Config
+(`x-portkey-config: pc-***`). No AIRS SDK, no AIRS keys in code. Configure once;
+every agent that uses the Config inherits the protection.
 
 ---
 
@@ -182,8 +248,8 @@ gateway (Portkey's **MCP Gateway**), which adds, in your terms:
 - **An approval workflow before a change** — a real **change-control gate** in
   front of a firewall commit.
 
-So the endgame: **AIRS inline on the prompts, and policy + approval on the
-actions** — the whole agent under one control plane. *(Roadmap, not today's demo.)*
+Endgame: **AIRS inline on the prompts, and policy + approval on the actions** —
+the whole agent under one control plane. *(Roadmap, not today's demo.)*
 
 ---
 
@@ -191,8 +257,10 @@ actions** — the whole agent under one control plane. *(Roadmap, not today's de
 
 - **Same AIRS, new traffic.** Same profile, same Strata console — now enforced
   **inline on AI calls**, a workload your current controls can't see.
-- **Inline prevention.** AIRS scans the prompt **before** the model — it's a drop,
-  not an after-the-fact alert.
+- **You control the data path.** Self-host the gateway and the model traffic +
+  AIRS enforcement stay inside your environment.
+- **Inline prevention.** AIRS scans the prompt **before** the model — a drop, not
+  an after-the-fact alert.
 - **Near-zero integration.** Protection is configured in the gateway; the app
   points at a Config. No AIRS code in every application.
 - **First-party.** The gateway (Portkey) is **Palo Alto Networks** — the emerging
@@ -208,6 +276,7 @@ actions** — the whole agent under one control plane. *(Roadmap, not today's de
 - **Prisma AIRS — API Intercept (pan.dev):** <https://pan.dev/prisma-airs/>
 - **Portkey — Prisma AIRS guardrail:** <https://portkey.ai/docs/integrations/guardrails/palo-alto-panw-prisma>
 - **Portkey — Config object & guardrails:** <https://portkey.ai/docs/api-reference/inference-api/config-object>
+- **Portkey — request headers (integration):** <https://portkey.ai/docs/api-reference/inference-api/headers>
+- **Portkey — open-source / self-hosting:** <https://portkey.ai/docs/product/open-source> · repo: <https://github.com/Portkey-AI/gateway>
 - **Portkey — MCP Gateway (governing tool calls):** <https://portkey.ai/docs/product/mcp-gateway>
-- **Portkey + Prisma AIRS (PANW blog):** <https://www.paloaltonetworks.com/blog/2025/08/portkey-fortifies-ai-gateway-with-prisma-airs-platform/>
 - **Reference implementation (this repo):** `packages/pan-os-agent/`
