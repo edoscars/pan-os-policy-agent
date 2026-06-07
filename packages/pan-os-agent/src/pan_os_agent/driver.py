@@ -27,8 +27,8 @@ async def run_intents(
 ) -> list[PolicyDraftState]:
     """Run the gauntlet for each intent, reusing one context (one MCP server).
 
-    `stages` is forwarded to run_agent so the secured product can pass
-    SECURED_STAGES (the core four plus the AIRS gate).
+    `stages` is forwarded to run_agent (defaults to the core gauntlet); kept
+    injectable so callers and tests can supply a custom stage list.
     """
     results = []
     for text in intents:

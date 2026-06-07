@@ -5,3 +5,6 @@ __pycache__/
 *.egg-info/
 corpus/
 traces/
+# Rendered slide decks — regenerate from the .md with Marp.
+*.pdf
+*.pptx
