@@ -36,6 +36,10 @@ class FakeMessages:
             )
         response = self._responses[self._index]
         self._index += 1
+        # A canned exception (e.g. an APIStatusError) is raised, to model the
+        # gateway rejecting a call — like a Portkey guardrail denial.
+        if isinstance(response, BaseException):
+            raise response
         return response
 
 
@@ -58,7 +62,7 @@ def fake_anthropic():
 
     def _build(responses: list) -> FakeAnthropic:
         normalized = [
-            r if isinstance(r, FakeParsedMessage) else FakeParsedMessage(r)
+            r if isinstance(r, (FakeParsedMessage, BaseException)) else FakeParsedMessage(r)
             for r in responses
         ]
         return FakeAnthropic(normalized)

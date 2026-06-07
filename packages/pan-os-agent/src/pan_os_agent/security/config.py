@@ -1,8 +1,8 @@
-"""Settings for the secured product (Portkey gateway + Prisma AIRS).
+"""Settings for the secured product (Portkey gateway).
 
-Separate from the core config so the unsecured product never requires these
-keys. The Prisma AIRS API key is read by the aisecurity SDK directly from
-PANW_AI_SEC_API_KEY, so it isn't modelled here.
+Separate from the core config so the unsecured product never requires these.
+Prisma AIRS is configured entirely in the Portkey GUI (Guardrails) and attached
+to the Config referenced by `portkey_config` — there are no AIRS keys here.
 """
 
 from functools import lru_cache
@@ -16,7 +16,8 @@ class SecuredSettings(BaseSettings):
     portkey_base_url: str = "https://api.portkey.ai"
     # Portkey references models by a catalog slug: @<provider>/<model>.
     portkey_model: str = "@anthropic/claude-opus-4-8"
-    airs_profile_name: str = Field(...)
+    # Portkey Config ID (pc-***) whose input/output guardrails run Prisma AIRS.
+    portkey_config: str = Field(...)
 
     model_config = SettingsConfigDict(env_file_encoding="utf-8", frozen=True)
 

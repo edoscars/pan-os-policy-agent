@@ -1,13 +1,15 @@
-"""Single-shot CLI for the SECURED agent (Portkey gateway + Prisma AIRS gate).
+"""Single-shot CLI for the SECURED agent (Portkey gateway + Prisma AIRS).
 
-Same gauntlet as run_agent.py, plus: LLM calls routed through Portkey, and an
-AIRS action gate that scans the intent and proposed rule before the approval
-gate, halting on a block.
+Same four-stage gauntlet as run_agent.py — the only difference is the client:
+LLM calls are routed through a Portkey Config whose guardrails run Prisma AIRS.
+AIRS scans each call's prompt *before* the model and the response after; a block
+comes back as HTTP 446 and halts the run as a security event. AIRS is configured
+in the Portkey GUI, so this needs no extra Python deps and no AIRS keys here.
 
 Run from repo root:
-    uv run --group secured --env-file .env python \\
+    uv run --env-file .env python \\
         packages/pan-os-agent/scripts/run_agent_secured.py "<intent>"
-    uv run --group secured --env-file .env python \\
+    uv run --env-file .env python \\
         packages/pan-os-agent/scripts/run_agent_secured.py \\
         --fixtures packages/pan-os-agent/fixtures/intents.txt
 """
@@ -19,9 +21,7 @@ from pathlib import Path
 from pan_os_agent.context import AgentContext
 from pan_os_agent.driver import load_intents, render_outcome, run_intents
 from pan_os_agent.mcp_client import McpClient
-from pan_os_agent.security.airs import AirsScanner
 from pan_os_agent.security.config import get_secured_settings
-from pan_os_agent.security.gate import SECURED_STAGES
 from pan_os_agent.security.gateway import build_portkey_anthropic
 from pan_os_rag.retrieve import retrieve
 
@@ -45,13 +45,13 @@ async def main() -> None:
 
     settings = get_secured_settings()
     client = build_portkey_anthropic(settings)
-    airs = AirsScanner(settings.airs_profile_name)
     async with McpClient() as mcp:
+        # Same core gauntlet as the unsecured product; AIRS is enforced at the
+        # gateway by the Portkey Config, not by an extra stage.
         ctx = AgentContext(
-            mcp=mcp, retriever=retrieve, anthropic=client,
-            model=settings.portkey_model, airs=airs,
+            mcp=mcp, retriever=retrieve, anthropic=client, model=settings.portkey_model
         )
-        results = await run_intents(intents, ctx, SECURED_STAGES)
+        results = await run_intents(intents, ctx)
 
     if args.out:
         args.out.mkdir(parents=True, exist_ok=True)
