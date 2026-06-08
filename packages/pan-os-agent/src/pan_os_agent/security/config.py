@@ -18,6 +18,10 @@ class SecuredSettings(BaseSettings):
     portkey_model: str = "@anthropic/claude-opus-4-8"
     # Portkey Config ID (pc-***) whose input/output guardrails run Prisma AIRS.
     portkey_config: str = Field(...)
+    # Optional: Portkey MCP gateway URL (https://mcp.portkey.ai/<slug>/mcp). When
+    # set, the secured agent routes its firewall tool calls through Portkey so
+    # they're logged/governed there; when empty, it spawns the server over stdio.
+    portkey_mcp_url: str = ""
 
     model_config = SettingsConfigDict(env_file_encoding="utf-8", frozen=True)
 

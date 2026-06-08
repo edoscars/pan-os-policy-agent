@@ -20,9 +20,8 @@ from pathlib import Path
 
 from pan_os_agent.context import AgentContext
 from pan_os_agent.driver import load_intents, render_outcome, run_intents
-from pan_os_agent.mcp_client import McpClient
 from pan_os_agent.security.config import get_secured_settings
-from pan_os_agent.security.gateway import build_portkey_anthropic
+from pan_os_agent.security.gateway import build_mcp_client, build_portkey_anthropic
 from pan_os_rag.retrieve import retrieve
 
 
@@ -45,7 +44,7 @@ async def main() -> None:
 
     settings = get_secured_settings()
     client = build_portkey_anthropic(settings)
-    async with McpClient() as mcp:
+    async with build_mcp_client(settings) as mcp:
         # Same core gauntlet as the unsecured product; AIRS is enforced at the
         # gateway by the Portkey Config, not by an extra stage.
         ctx = AgentContext(

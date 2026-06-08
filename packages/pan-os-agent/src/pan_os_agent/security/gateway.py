@@ -15,6 +15,7 @@ which the LLM helper turns into a security halt.
 
 from anthropic import AsyncAnthropic
 
+from pan_os_agent.mcp_client import McpClient
 from pan_os_agent.security.config import SecuredSettings
 
 
@@ -27,3 +28,18 @@ def build_portkey_anthropic(settings: SecuredSettings) -> AsyncAnthropic:
             "x-portkey-config": settings.portkey_config,
         },
     )
+
+
+def build_mcp_client(settings: SecuredSettings) -> McpClient:
+    """MCP client for the secured product.
+
+    If a Portkey MCP gateway URL is configured, route the firewall tool calls
+    through it (logged/governed by Portkey, authenticated with the Portkey key);
+    otherwise fall back to the default stdio transport.
+    """
+    if settings.portkey_mcp_url:
+        return McpClient(
+            url=settings.portkey_mcp_url,
+            headers={"x-portkey-api-key": settings.portkey_api_key.get_secret_value()},
+        )
+    return McpClient()

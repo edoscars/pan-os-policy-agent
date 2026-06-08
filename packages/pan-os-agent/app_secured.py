@@ -15,10 +15,9 @@ import asyncio
 import streamlit as st
 
 from pan_os_agent.context import AgentContext
-from pan_os_agent.mcp_client import McpClient
 from pan_os_agent.orchestrator import run_agent
 from pan_os_agent.security.config import get_secured_settings
-from pan_os_agent.security.gateway import build_portkey_anthropic
+from pan_os_agent.security.gateway import build_mcp_client, build_portkey_anthropic
 from pan_os_agent.state import PolicyDraftState
 from pan_os_agent.ui import render_result
 from pan_os_rag.retrieve import retrieve
@@ -37,7 +36,7 @@ def run_gauntlet(intent_text: str) -> PolicyDraftState:
     async def _run() -> PolicyDraftState:
         settings = get_secured_settings()
         client = build_portkey_anthropic(settings)
-        async with McpClient() as mcp:
+        async with build_mcp_client(settings) as mcp:
             ctx = AgentContext(
                 mcp=mcp, retriever=retrieve, anthropic=client, model=settings.portkey_model
             )
