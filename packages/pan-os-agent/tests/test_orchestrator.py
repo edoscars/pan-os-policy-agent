@@ -4,7 +4,7 @@ Tests the loop's contract â€” run in order, thread state through, stop on halt â
 not the real stages (those are tested individually).
 """
 
-from pan_os_agent.orchestrator import run_agent
+from pan_os_agent.orchestrator import run_agent, run_agent_streamed
 from pan_os_agent.state import PolicyDraftState
 
 
@@ -42,3 +42,30 @@ async def test_run_agent_stops_at_first_halt():
     assert result.halted is True
     # "c" never ran
     assert [t.stage for t in result.trace] == ["a", "b"]
+
+
+async def test_run_agent_streamed_yields_after_each_stage():
+    state = PolicyDraftState(intent_text="x")
+
+    seen = [
+        s async for s in run_agent_streamed(
+            state, ctx=None, stages=[_stage("a"), _stage("b")]
+        )
+    ]
+
+    # One yield per stage, each carrying the cumulative trace.
+    assert [s.trace[-1].stage for s in seen] == ["a", "b"]
+    assert [len(s.trace) for s in seen] == [1, 2]
+
+
+async def test_run_agent_streamed_stops_after_halt():
+    state = PolicyDraftState(intent_text="x")
+
+    seen = [
+        s async for s in run_agent_streamed(
+            state, ctx=None, stages=[_stage("a"), _halting_stage("b"), _stage("c")]
+        )
+    ]
+
+    assert seen[-1].halted is True
+    assert [s.trace[-1].stage for s in seen] == ["a", "b"]
