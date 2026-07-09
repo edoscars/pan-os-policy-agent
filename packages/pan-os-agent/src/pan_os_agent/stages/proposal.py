@@ -6,11 +6,10 @@ This is the gauntlet's terminal output; shadowing is surfaced as a warning for
 the approval gate, not a rejection, so the stage advances with the proposal.
 """
 
-import json
-
 from pan_os_agent.context import AgentContext
 from pan_os_agent.llm import complete_structured
-from pan_os_agent.models import Proposal, StructuredIntent
+from pan_os_agent.models import Proposal
+from pan_os_agent.stages.formatting import format_intent_and_rulebase
 from pan_os_agent.state import PolicyDraftState
 
 SYSTEM = """You propose a PAN-OS Security rule for an intent and check whether it \
@@ -36,18 +35,12 @@ otherwise shadowed=false. The proposed rule must be valid even when shadowed —
 shadowing is a warning, not a rejection."""
 
 
-def _format_user(intent: StructuredIntent, rules: list[dict]) -> str:
-    return (
-        f"INTENT:\n{intent.model_dump_json(indent=2)}\n\n"
-        f"CURRENT SECURITY RULEBASE (evaluation order):\n{json.dumps(rules, indent=2)}"
-    )
-
-
 async def propose_rule(state: PolicyDraftState, ctx: AgentContext) -> PolicyDraftState:
     intent = state.structured_intent
+    assert intent is not None  # intent stage runs first and halts if it can't parse
 
     rules = (await ctx.mcp.call_tool("list_security_rules"))["result"]
-    user = _format_user(intent, rules)
+    user = format_intent_and_rulebase(intent, rules)
 
     proposal = await complete_structured(ctx, system=SYSTEM, user=user, schema=Proposal)
     if proposal is None:

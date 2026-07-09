@@ -5,11 +5,10 @@ existing rule covers it, there's nothing to propose, so the gauntlet halts with
 that rule named. Otherwise it advances to the proposal stage.
 """
 
-import json
-
 from pan_os_agent.context import AgentContext
 from pan_os_agent.llm import complete_structured
-from pan_os_agent.models import RedundancyReport, StructuredIntent
+from pan_os_agent.models import RedundancyReport
+from pan_os_agent.stages.formatting import format_intent_and_rulebase
 from pan_os_agent.state import PolicyDraftState
 
 SYSTEM = """You determine whether an existing PAN-OS Security rule already \
@@ -31,18 +30,12 @@ justify in reasoning. Otherwise set redundant=false and describe the gap in \
 reasoning."""
 
 
-def _format_user(intent: StructuredIntent, rules: list[dict]) -> str:
-    return (
-        f"INTENT:\n{intent.model_dump_json(indent=2)}\n\n"
-        f"CURRENT SECURITY RULEBASE (evaluation order):\n{json.dumps(rules, indent=2)}"
-    )
-
-
 async def check_redundancy(state: PolicyDraftState, ctx: AgentContext) -> PolicyDraftState:
     intent = state.structured_intent
+    assert intent is not None  # intent stage runs first and halts if it can't parse
 
     rules = (await ctx.mcp.call_tool("list_security_rules"))["result"]
-    user = _format_user(intent, rules)
+    user = format_intent_and_rulebase(intent, rules)
 
     report = await complete_structured(
         ctx, system=SYSTEM, user=user, schema=RedundancyReport

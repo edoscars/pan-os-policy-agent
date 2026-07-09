@@ -52,7 +52,8 @@ def embed_query(query: str) -> list[float]:
     Uses input_type='query' for optimal retrieval against document embeddings.
     """
     voyage_client = _get_client()
-    return voyage_client.embed(texts=[query], model=MODEL, input_type="query").embeddings[0]
+    embedding = voyage_client.embed(texts=[query], model=MODEL, input_type="query").embeddings[0]
+    return [float(x) for x in embedding]
 
 
 if __name__ == "__main__":

@@ -22,11 +22,17 @@ def load_intents(path: Path) -> list[str]:
     return intents
 
 
-async def run_intents(intents: list[str], ctx: AgentContext) -> list[PolicyDraftState]:
-    """Run the gauntlet for each intent, reusing one context (one MCP server)."""
+async def run_intents(
+    intents: list[str], ctx: AgentContext, stages=None
+) -> list[PolicyDraftState]:
+    """Run the gauntlet for each intent, reusing one context (one MCP server).
+
+    `stages` is forwarded to run_agent (defaults to the core gauntlet); kept
+    injectable so callers and tests can supply a custom stage list.
+    """
     results = []
     for text in intents:
-        results.append(await run_agent(PolicyDraftState(intent_text=text), ctx))
+        results.append(await run_agent(PolicyDraftState(intent_text=text), ctx, stages))
     return results
 
 
@@ -40,7 +46,7 @@ def render_outcome(state: PolicyDraftState) -> str:
     lines = [f"INTENT: {state.intent_text}"]
     lines += [f"  trace: {' -> '.join(t.stage for t in state.trace)}"]
 
-    if state.halted:
+    if state.halted or state.proposal is None:
         lines.append(f"  HALTED: {state.halt_reason}")
         return "\n".join(lines)
 

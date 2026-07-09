@@ -15,6 +15,21 @@ members=["packages/*"]
 [tool.ruff]
 line-length=100
 
+[tool.mypy]
+python_version = "3.11"
+# pydantic's plugin teaches mypy that BaseSettings fields come from the
+# environment, so `Settings()` with no args is not a missing-argument error.
+plugins = ["pydantic.mypy"]
+# Several dependencies (panos, lancedb, voyageai, streamlit, mcp) ship no type
+# stubs; don't fail on their untyped imports.
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Scripts and tests are exploratory/fixture-heavy; type-check the shipped
+# library sources, not those.
+module = ["*.tests.*", "*.scripts.*"]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 # Collect only real test modules; scripts like smoke_test.py would otherwise

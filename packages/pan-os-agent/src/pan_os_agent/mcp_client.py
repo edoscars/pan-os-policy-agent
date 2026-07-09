@@ -1,8 +1,10 @@
-"""Async MCP client: spawns the pan-os-mcp server over stdio and calls its tools.
+"""Async MCP client: talks to the pan-os-mcp tools over the MCP protocol.
 
-The agent is a real MCP *client* — it runs the server as a subprocess and talks
-to it over the protocol, rather than importing the tool functions directly. This
-is the production-realistic path; the template is pan-os-mcp's smoke_test.py.
+The agent is a real MCP *client*. By default it spawns the pan-os-mcp server as
+a subprocess over stdio. If a `url` is given, it instead connects to that remote
+streamable-HTTP endpoint — e.g. the Portkey MCP gateway
+(https://mcp.portkey.ai/<slug>/mcp), so every tool call is proxied and logged by
+Portkey. Either way the rest of the agent is unchanged.
 """
 
 import json
@@ -12,6 +14,7 @@ from typing import Any
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import CallToolResult
 
 
@@ -31,41 +34,58 @@ def _parse_tool_result(name: str, result: CallToolResult) -> Any:
     absent. This is the layer this package owns, so it gets the unit test.
     """
     if result.isError:
-        detail = result.content[0].text if result.content else "unknown error"
+        # Content blocks are a union; only TextContent carries .text, so read it
+        # defensively (an error result without a text block is still an error).
+        detail = getattr(result.content[0], "text", "unknown error") if result.content else "unknown error"
         raise McpToolError(f"tool {name!r} failed: {detail}")
 
     if result.structuredContent is not None:
         return result.structuredContent
 
-    if result.content and getattr(result.content[0], "text", None) is not None:
-        return json.loads(result.content[0].text)
+    if result.content:
+        text = getattr(result.content[0], "text", None)
+        if text is not None:
+            return json.loads(text)
 
     raise McpToolError(f"tool {name!r} returned no parseable content")
 
 
 class McpClient:
-    """Async context manager around a spawned pan-os-mcp server session.
+    """Async context manager around an MCP session, reused across call_tool.
 
-    The session is opened once on __aenter__ and reused across call_tool
-    invocations, so the firewall connection (lru_cached server-side) is not
-    torn down between calls. Pass an explicit env to forward credentials to
-    the subprocess; defaults to the current process environment, which is
-    populated when the agent is run via `uv run --env-file .env`.
+    Two transports, chosen by `url`:
+      - `url=""` (default): spawn pan-os-mcp over stdio. `env` is forwarded to the
+        subprocess (defaults to the current environment, populated by
+        `uv run --env-file .env`).
+      - `url` set: connect to a remote streamable-HTTP endpoint with `headers`
+        (e.g. the Portkey MCP gateway, with x-portkey-api-key), so tool calls are
+        governed and logged by Portkey.
     """
 
-    def __init__(self, env: dict[str, str] | None = None) -> None:
+    def __init__(
+        self,
+        env: dict[str, str] | None = None,
+        url: str = "",
+        headers: dict[str, str] | None = None,
+    ) -> None:
         self._env = env if env is not None else dict(os.environ)
+        self._url = url
+        self._headers = headers or {}
         self._stack: AsyncExitStack | None = None
         self._session: ClientSession | None = None
 
     async def __aenter__(self) -> "McpClient":
-        params = StdioServerParameters(
-            command="uv",
-            args=["run", "pan-os-mcp"],
-            env=self._env,
-        )
         self._stack = AsyncExitStack()
-        read, write = await self._stack.enter_async_context(stdio_client(params))
+        if self._url:
+            # streamablehttp_client yields (read, write, get_session_id).
+            read, write, _ = await self._stack.enter_async_context(
+                streamablehttp_client(self._url, headers=self._headers)
+            )
+        else:
+            params = StdioServerParameters(
+                command="uv", args=["run", "pan-os-mcp"], env=self._env
+            )
+            read, write = await self._stack.enter_async_context(stdio_client(params))
         self._session = await self._stack.enter_async_context(ClientSession(read, write))
         await self._session.initialize()
         return self

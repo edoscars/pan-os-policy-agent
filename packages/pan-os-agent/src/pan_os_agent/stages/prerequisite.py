@@ -80,6 +80,7 @@ def _format_user(intent: StructuredIntent, inventory: dict[str, list[str]],
 
 async def check_prerequisites(state: PolicyDraftState, ctx: AgentContext) -> PolicyDraftState:
     intent = state.structured_intent
+    assert intent is not None  # intent stage runs first and halts if it can't parse
 
     inventory = await _gather_inventory(ctx.mcp)
     chunks = ctx.retriever(intent.summary, RETRIEVAL_K)

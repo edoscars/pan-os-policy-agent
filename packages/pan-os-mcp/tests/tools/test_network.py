@@ -1,7 +1,7 @@
 """Tests for pan_os_mcp.tools.network."""
 
 from panos.network import Zone as SdkZone
-from pan_os_mcp.tools.network import list_zones, Zone
+from pan_os_mcp.tools.network import list_zones
 from types import SimpleNamespace
 
 def test_list_zones_returns_typed_results(monkeypatch):

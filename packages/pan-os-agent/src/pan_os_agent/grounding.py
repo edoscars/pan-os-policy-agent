@@ -7,7 +7,6 @@ LLM non-determinism doesn't make the score flaky; checks only assert dimensions
 that are deterministic given the firewall state.
 """
 
-import json
 from pathlib import Path
 
 from pydantic import BaseModel
