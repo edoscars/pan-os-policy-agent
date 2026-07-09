@@ -11,11 +11,9 @@ Run from repo root:
 import asyncio
 
 import streamlit as st
-from anthropic import AsyncAnthropic
 
-from pan_os_agent.config import get_settings
 from pan_os_agent.context import AgentContext
-from pan_os_agent.mcp_client import McpClient
+from pan_os_agent.llm_client import build_llm_client, build_mcp_client, get_llm_settings
 from pan_os_agent.orchestrator import run_agent
 from pan_os_agent.state import PolicyDraftState
 from pan_os_agent.ui import render_result
@@ -33,9 +31,12 @@ def run_gauntlet(intent_text: str) -> PolicyDraftState:
     """Run the four-stage gauntlet once for an intent (one MCP server spawn)."""
 
     async def _run() -> PolicyDraftState:
-        client = AsyncAnthropic(api_key=get_settings().anthropic_api_key.get_secret_value())
-        async with McpClient() as mcp:
-            ctx = AgentContext(mcp=mcp, retriever=retrieve, anthropic=client)
+        settings = get_llm_settings()
+        client = build_llm_client(settings)
+        async with build_mcp_client(settings) as mcp:
+            ctx = AgentContext(
+                mcp=mcp, retriever=retrieve, anthropic=client, model=settings.call_model
+            )
             return await run_agent(PolicyDraftState(intent_text=intent_text), ctx)
 
     return asyncio.run(_run())

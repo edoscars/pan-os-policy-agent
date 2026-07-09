@@ -1,8 +1,7 @@
 """Shared Streamlit rendering for the agent demo apps.
 
-Imports streamlit, so it is only ever loaded by the app entrypoints (never by
-the core agent or its tests) — the same isolation pattern as security/airs.py.
-Both the unsecured and secured apps render results through render_result.
+Imports streamlit, so it is only ever loaded by the app entrypoint (never by
+the core agent or its tests), keeping the GUI framework out of the library.
 """
 
 import streamlit as st

@@ -12,12 +12,9 @@ Run from repo root:
 import asyncio
 from pathlib import Path
 
-from anthropic import AsyncAnthropic
-
-from pan_os_agent.config import get_settings
 from pan_os_agent.context import AgentContext
 from pan_os_agent.grounding import case_passed, load_cases, outcome_of, score_case
-from pan_os_agent.mcp_client import McpClient
+from pan_os_agent.llm_client import build_llm_client, build_mcp_client, get_llm_settings
 from pan_os_agent.orchestrator import run_agent
 from pan_os_agent.state import PolicyDraftState
 from pan_os_rag.retrieve import retrieve
@@ -27,11 +24,14 @@ CASES_PATH = Path(__file__).resolve().parents[1] / "eval" / "cases.jsonl"
 
 async def main() -> None:
     cases = load_cases(CASES_PATH)
-    client = AsyncAnthropic(api_key=get_settings().anthropic_api_key.get_secret_value())
+    settings = get_llm_settings()
+    client = build_llm_client(settings)
 
     passed = 0
-    async with McpClient() as mcp:
-        ctx = AgentContext(mcp=mcp, retriever=retrieve, anthropic=client)
+    async with build_mcp_client(settings) as mcp:
+        ctx = AgentContext(
+            mcp=mcp, retriever=retrieve, anthropic=client, model=settings.call_model
+        )
         for case in cases:
             state = await run_agent(PolicyDraftState(intent_text=case.intent), ctx)
             checks = score_case(case, state)
