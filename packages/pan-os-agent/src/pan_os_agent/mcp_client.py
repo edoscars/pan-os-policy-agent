@@ -34,14 +34,18 @@ def _parse_tool_result(name: str, result: CallToolResult) -> Any:
     absent. This is the layer this package owns, so it gets the unit test.
     """
     if result.isError:
-        detail = result.content[0].text if result.content else "unknown error"
+        # Content blocks are a union; only TextContent carries .text, so read it
+        # defensively (an error result without a text block is still an error).
+        detail = getattr(result.content[0], "text", "unknown error") if result.content else "unknown error"
         raise McpToolError(f"tool {name!r} failed: {detail}")
 
     if result.structuredContent is not None:
         return result.structuredContent
 
-    if result.content and getattr(result.content[0], "text", None) is not None:
-        return json.loads(result.content[0].text)
+    if result.content:
+        text = getattr(result.content[0], "text", None)
+        if text is not None:
+            return json.loads(text)
 
     raise McpToolError(f"tool {name!r} returned no parseable content")
 

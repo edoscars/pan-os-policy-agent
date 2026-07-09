@@ -82,7 +82,9 @@ _STAGE_DETAIL = {
 def render_stage_card(state: PolicyDraftState, stage_name: str) -> None:
     """Render one completed stage as an expandable, plain-English card."""
     label = STAGE_LABELS.get(stage_name, stage_name)
-    halted_here = state.halted and state.trace and state.trace[-1].stage == stage_name
+    halted_here = bool(
+        state.halted and state.trace and state.trace[-1].stage == stage_name
+    )
 
     if stage_name == "security":
         st.error(f"🛡️ **{label} — BLOCKED**")
@@ -103,6 +105,8 @@ def render_stage_card(state: PolicyDraftState, stage_name: str) -> None:
 
 
 def _render_rag_panel(state: PolicyDraftState) -> None:
+    if state.prerequisites is None:
+        return
     doc_ids = state.prerequisites.retrieved_doc_ids
     if not doc_ids:
         return
@@ -142,6 +146,8 @@ def render_result(state: PolicyDraftState) -> None:
 
 
 def _render_proposal(state: PolicyDraftState) -> None:
+    if state.proposal is None:
+        return
     rule = state.proposal.rule
     st.success(f"**Proposed rule:** `{rule.name}` — pending approval, never committed")
     rows = [

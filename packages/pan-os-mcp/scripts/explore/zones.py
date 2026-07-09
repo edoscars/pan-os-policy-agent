@@ -9,7 +9,6 @@ from panos.network import Zone
 from pan_os_mcp.panos import get_firewall
 
 if __name__ == "__main__":
-    import xml.etree.ElementTree as ET
 
     fw = get_firewall()
     zones = Zone.refreshall(fw.client)

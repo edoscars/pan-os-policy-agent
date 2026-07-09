@@ -69,7 +69,7 @@ def discover_subpages(html_path: Path) -> list[str]:
         href = subpage.get('href')
         if not href:
             continue 
-        subpage_url = urljoin("https://docs.paloaltonetworks.com/", urldefrag(href)[0])
+        subpage_url = urljoin("https://docs.paloaltonetworks.com/", urldefrag(str(href))[0])
         parsed = urlparse(subpage_url)
         if not parsed.path.strip("/"):
             continue

@@ -31,7 +31,7 @@ class ChunkRecord(LanceModel):
     page_title: str
     heading_path: list[str]
     position: int
-    vector: Vector(VECTOR_DIM)
+    vector: Vector(VECTOR_DIM)  # type: ignore[valid-type]  # lancedb runtime type
 
 
 def get_db():

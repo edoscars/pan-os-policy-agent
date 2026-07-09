@@ -46,7 +46,7 @@ def render_outcome(state: PolicyDraftState) -> str:
     lines = [f"INTENT: {state.intent_text}"]
     lines += [f"  trace: {' -> '.join(t.stage for t in state.trace)}"]
 
-    if state.halted:
+    if state.halted or state.proposal is None:
         lines.append(f"  HALTED: {state.halt_reason}")
         return "\n".join(lines)
 

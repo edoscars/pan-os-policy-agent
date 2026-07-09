@@ -33,7 +33,8 @@ def main() -> None:
     http://127.0.0.1:8000/mcp by default; override host/port with FASTMCP_HOST
     / FASTMCP_PORT), e.g. to register it behind the Portkey MCP gateway.
     """
-    mcp.run(transport=os.getenv("PAN_OS_MCP_TRANSPORT", "stdio"))
+    transport = os.getenv("PAN_OS_MCP_TRANSPORT", "stdio")
+    mcp.run(transport=transport)  # type: ignore[arg-type]  # validated by FastMCP
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,5 @@
 """Tests for pan_os_mcp.tools.system."""
 
-import pytest
 
 from pan_os_mcp.tools.system import get_system_info, SystemInfo
 
