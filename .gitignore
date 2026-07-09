@@ -5,6 +5,12 @@ __pycache__/
 *.egg-info/
 corpus/
 traces/
+# Streamlit's per-user cache/config.
+.streamlit/
+# Local tooling / test artifacts, not part of the project.
+.claude/
+ngrok.exe
+ngrok-v3-*.zip
 # Rendered slide decks — regenerate from the .md with Marp.
 *.pdf
 *.pptx
